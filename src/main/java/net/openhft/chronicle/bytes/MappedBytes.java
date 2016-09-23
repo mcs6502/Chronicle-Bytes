@@ -70,7 +70,7 @@ public class MappedBytes extends AbstractBytes<Void> implements Closeable {
 
     @NotNull
     public static MappedBytes mappedBytes(@NotNull File file, long chunkSize, long overlapSize) throws FileNotFoundException, IllegalStateException {
-        return mappedBytes( file,   chunkSize,   overlapSize, false);
+        return mappedBytes(file, chunkSize, overlapSize, false);
     }
 
     @NotNull
@@ -88,7 +88,7 @@ public class MappedBytes extends AbstractBytes<Void> implements Closeable {
         return CHECKING ? new CheckingMappedBytes(rw) : new MappedBytes(rw);
     }
 
-    private static MappedBytes readOnly(File file) throws FileNotFoundException {
+    public static MappedBytes readOnly(File file) throws FileNotFoundException {
         return new MappedBytes(MappedFile.readOnly(file));
     }
 
