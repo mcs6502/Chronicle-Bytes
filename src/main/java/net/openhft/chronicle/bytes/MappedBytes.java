@@ -84,7 +84,7 @@ public class MappedBytes extends AbstractBytes<Void> implements Closeable {
     }
 
     @NotNull
-    private static MappedBytes mappedBytes(MappedFile rw) {
+    public static MappedBytes mappedBytes(MappedFile rw) {
         return CHECKING ? new CheckingMappedBytes(rw) : new MappedBytes(rw);
     }
 
