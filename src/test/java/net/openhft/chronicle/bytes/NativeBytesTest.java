@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.bytes;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.core.threads.ThreadDump;
@@ -37,6 +38,7 @@ import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static net.openhft.chronicle.bytes.Allocator.HEAP;
 import static net.openhft.chronicle.bytes.Allocator.NATIVE;
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeFalse;
 
 /*
  * Created by daniel on 17/04/15.
@@ -107,7 +109,8 @@ public class NativeBytesTest {
 
     @SuppressWarnings("rawtypes")
     @Test
-    public void testAppendCharArrayNonAscii() {
+    public void testAppendCharArrayNonAscii() { // TODO: crashes OpenJ9 VM
+        assumeFalse(Jvm.isOpenJ9());
         Bytes b = alloc.elasticBytes(1);
         b.appendUtf8(new char[]{'Δ'}, 0, 1);
         b.release();
