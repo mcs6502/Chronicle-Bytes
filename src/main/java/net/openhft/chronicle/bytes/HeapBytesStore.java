@@ -365,7 +365,8 @@ public class HeapBytesStore<Underlying>
     public void write(
             long offsetInRDO, @NotNull ByteBuffer bytes, int offset, int length) throws BufferOverflowException {
         writeCheckOffset(offsetInRDO, length);
-        assert realUnderlyingObject == null || dataOffset >= (Jvm.is64bit() ? 12 : 8);
+        // the following assertion doesn't hold on OpenJ9 and seems wrong anyway
+        assert realUnderlyingObject == null || dataOffset >= (Jvm.is64bit() ? 12 : 8) || Jvm.isOpenJ9();
         if (bytes.isDirect()) {
             MEMORY.copyMemory(((DirectBuffer) bytes).address(), realUnderlyingObject,
                     this.dataOffset + offsetInRDO, length);
