@@ -254,7 +254,6 @@ public interface RandomDataOutput<R extends RandomDataOutput<R>> extends RandomC
     R write(long offsetInRDO, byte[] bytes, int offset, int length)
             throws BufferOverflowException;
 
-    @Deprecated(/*Is this used?*/)
     void write(long offsetInRDO, ByteBuffer bytes, int offset, int length)
             throws BufferOverflowException;
 
