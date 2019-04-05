@@ -65,13 +65,25 @@ public class HeapBytesStore<Underlying>
         this.capacity = byteArray.length;
     }
 
+    /**
+     * Creates a {@code HeapBytesStore} wrapper for the specified byte array.
+     *
+     * @param byteArray the byte array to wrap
+     * @return a heap bytes store initialised with the specified byte array
+     */
     @NotNull
-    static HeapBytesStore<byte[]> wrap(@NotNull byte[] byteArray) {
+    public static HeapBytesStore<byte[]> wrap(@NotNull byte[] byteArray) {
         return new HeapBytesStore<>(byteArray);
     }
 
+    /**
+     * Creates a {@code HeapBytesStore} wrapper for the specified byte buffer.
+     *
+     * @param bb the byte buffer to wrap
+     * @return a heap bytes store initialised with the byte buffer
+     */
     @NotNull
-    static HeapBytesStore<ByteBuffer> wrap(@NotNull ByteBuffer bb) {
+    public static HeapBytesStore<ByteBuffer> wrap(@NotNull ByteBuffer bb) {
         return new HeapBytesStore<>(bb);
     }
 
