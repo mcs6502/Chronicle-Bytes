@@ -1,6 +1,8 @@
 package net.openhft.chronicle.bytes;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.io.IOTools;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -10,6 +12,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
+import java.util.stream.IntStream;
 
 import static org.junit.Assert.*;
 
@@ -351,7 +354,7 @@ public class MappedBytesTest {
             raf.setLength(4096);
             assertTrue(tempFile.setWritable(false));
             final MappedBytes mappedBytes = MappedBytes.readOnly(tempFile);
-    
+
             assertTrue(mappedBytes.
                     isBackingFileReadOnly());
             mappedBytes.release();
@@ -403,4 +406,52 @@ public class MappedBytesTest {
         System.out.println("PBS(4): " + pbs.readInt(4));
     }
 
+    @Test
+    public void memoryOverlapRegions() throws FileNotFoundException {
+        String tmpfile = OS.TARGET + "/memoryOverlapRegions-" + System.nanoTime();
+        int chunkSize = 256 << 16;
+        int overlapSize = 64 << 16;
+        String longString = new String(new char[overlapSize * 2]);
+        Bytes csb = Bytes.from(longString);
+        try (MappedBytes mb = MappedBytes.mappedBytes(new File(tmpfile), chunkSize, overlapSize)) {
+            StringBuilder sb = new StringBuilder();
+            for (int offset : new int[]{chunkSize - OS.pageSize(), chunkSize + overlapSize - OS.pageSize()}) {
+                mb.writePosition(offset);
+                mb.appendUtf8(longString);
+                mb.readPosition(offset);
+                assertEquals(offset < chunkSize ? 0 : chunkSize, mb.bytesStore().start());
+
+                mb.equalBytes(csb, csb.length());
+                assertEquals(chunkSize, mb.bytesStore().start());
+
+                mb.equalBytes(csb, csb.length());
+                assertEquals(chunkSize, mb.bytesStore().start());
+
+                mb.parseUtf8(sb, csb.length());
+                assertEquals(chunkSize, mb.bytesStore().start());
+            }
+        } finally {
+            csb.release();
+        }
+        IOTools.deleteDirWithFiles(tmpfile, 2);
+    }
+
+    @Test
+    public void threadSafeMappedBytes() throws FileNotFoundException {
+        String tmpfile = OS.TARGET + "/threadSafeMappedBytes-" + System.nanoTime();
+        int count = 4000;
+        IntStream.range(0, count)
+                .parallel()
+                .forEach(i -> {
+                    try (MappedBytes mb = MappedBytes.mappedBytes(tmpfile, 256 << 10)) {
+                        mb.addAndGetLong(0, 1);
+                    } catch (FileNotFoundException e) {
+                        Jvm.rethrow(e);
+                    }
+                });
+        try (MappedBytes mb = MappedBytes.mappedBytes(tmpfile, 256 << 10)) {
+            assertEquals(count, mb.readVolatileLong(0));
+        }
+        IOTools.deleteDirWithFiles(tmpfile, 2);
+    }
 }

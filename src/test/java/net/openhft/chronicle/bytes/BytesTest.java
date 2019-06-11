@@ -46,6 +46,7 @@ import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static net.openhft.chronicle.bytes.Allocator.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeFalse;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 @RunWith(Parameterized.class)
@@ -294,6 +295,7 @@ public class BytesTest {
 
     @Test
     public void fromHexString() {
+        assumeFalse(NativeBytes.areNewGuarded());
         Bytes bytes = alloc1.elasticBytes(260);
         try {
             for (int i = 0; i < 259; i++)
@@ -372,11 +374,17 @@ public class BytesTest {
 
     @Test
     public void testEqualBytesWithSecondStoreBeingLonger() throws IORuntimeException {
-        BytesStore store1 = alloc1.elasticBytes(64).append("TW-TRSY-20181217-NY572677_3256N1");
-        BytesStore store2 = alloc1.elasticBytes(64).append("TW-TRSY-20181217-NY572677_3256N15");
-        assertThat(store1.equalBytes(store2, store2.length()), is(false));
-        store1.release();
-        store2.release();
+
+        BytesStore store1 = null, store2 = null;
+        try {
+            store1 = alloc1.elasticBytes(64).append("TW-TRSY-20181217-NY572677_3256N1");
+            store2 = alloc1.elasticBytes(64).append("TW-TRSY-20181217-NY572677_3256N15");
+            assertThat(store1.equalBytes(store2, store2.length()), is(false));
+        } finally {
+            store1.release();
+            store2.release();
+        }
+
     }
 
     @Test
@@ -488,6 +496,7 @@ public class BytesTest {
 
     @Test
     public void testCompact() {
+        assumeFalse(NativeBytes.areNewGuarded());
         Bytes from = alloc1.elasticBytes(1);
         try {
             from.write("Hello World");
@@ -605,6 +614,7 @@ public class BytesTest {
 
     @Test
     public void testUnwrite() {
+        assumeFalse(NativeBytes.areNewGuarded());
         Bytes bytes = alloc1.elasticBytes(1);
         try {
             for (int i = 0; i < 26; i++) {
@@ -667,7 +677,7 @@ public class BytesTest {
 
     @Test
     public void testWriter() {
-
+        assumeFalse(NativeBytes.areNewGuarded());
         Bytes bytes = alloc1.elasticBytes(1);
         @NotNull PrintWriter writer = new PrintWriter(bytes.writer());
         writer.println(1);
@@ -719,6 +729,7 @@ public class BytesTest {
 
     @Test
     public void testParseUtf8High() {
+        assumeFalse(NativeBytes.areNewGuarded());
         @NotNull Bytes b = alloc1.elasticBytes(0xFFFFF);
         for (int i = ' '; i < Character.MAX_VALUE; i++)
             if (Character.isValidCodePoint(i))
@@ -758,6 +769,7 @@ public class BytesTest {
 
     @Test
     public void testWithLength() {
+        assumeFalse(NativeBytes.areNewGuarded());
         Bytes hello = Bytes.from("hello");
         Bytes world = Bytes.from("world");
         @NotNull Bytes b = alloc1.elasticBytes(16);
@@ -869,6 +881,8 @@ public class BytesTest {
 
     @Test
     public void uncheckedSkip() {
+        assumeFalse(NativeBytes.areNewGuarded());
+
         @NotNull Bytes b = alloc1.elasticBytes(16);
         try {
             b.uncheckedReadSkipOne();
@@ -904,6 +918,7 @@ public class BytesTest {
 
     @Test
     public void testHashCode() {
+        assumeFalse(NativeBytes.areNewGuarded());
 
         @NotNull Bytes b = alloc1.elasticBytes(16);
         try {

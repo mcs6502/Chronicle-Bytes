@@ -19,22 +19,48 @@ package net.openhft.chronicle.bytes;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.core.threads.ThreadDump;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.nio.BufferUnderflowException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Random;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static net.openhft.chronicle.bytes.BytesInternalTest.Nested.LENGTH;
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeFalse;
 
 @SuppressWarnings({"rawtypes"})
+@RunWith(Parameterized.class)
 public class BytesInternalTest {
+
+    private final boolean guarded;
+
+    public BytesInternalTest(String name, boolean guarded) {
+        this.guarded = guarded;
+    }
+
+    @Parameterized.Parameters(name = "{0}")
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {"Unguarded", false},
+                {"Guarded", true}
+        });
+    }
+
+    @AfterClass
+    public static void resetGuarded() {
+        NativeBytes.resetNewGuarded();
+    }
+
+    @Before
+    public void setGuarded() {
+        NativeBytes.setNewGuarded(guarded);
+    }
 
     @Test
     public void testParse8bitAndStringBuilderWithUtf16Coder() throws BufferUnderflowException, IOException {
@@ -86,6 +112,7 @@ public class BytesInternalTest {
 
     @Test
     public void testParseUTF8_LongString() throws UTFDataFormatRuntimeException {
+        assumeFalse(GuardedNativeBytes.areNewGuarded());
         @NotNull VanillaBytes bytes = Bytes.allocateElasticDirect();
         int length = LENGTH;
         @NotNull byte[] bytes2 = new byte[length];
@@ -105,6 +132,7 @@ public class BytesInternalTest {
 
     @Test
     public void testParseUTF81_LongString() throws UTFDataFormatRuntimeException {
+        assumeFalse(GuardedNativeBytes.areNewGuarded());
         @NotNull VanillaBytes bytes = Bytes.allocateElasticDirect();
         int length = LENGTH;
         @NotNull byte[] bytes2 = new byte[length];
@@ -156,6 +184,7 @@ public class BytesInternalTest {
 
     @Test
     public void testAllParseDouble() {
+        assumeFalse(GuardedNativeBytes.areNewGuarded());
         for (String s : "0.,1.,9.".split(",")) {
             // todo FIX for i == 7 && d == 8
             for (int d = 0; d < 8; d++) {
@@ -174,6 +203,7 @@ public class BytesInternalTest {
 
     @Test
     public void testWriteUtf8LongString() throws IORuntimeException {
+        assumeFalse(GuardedNativeBytes.areNewGuarded());
         @NotNull VanillaBytes bytes = Bytes.allocateElasticDirect();
         int length = LENGTH;
         StringBuilder sb = new StringBuilder(length);
@@ -256,11 +286,12 @@ public class BytesInternalTest {
         final BytesStore longerBuffer = Bytes.elasticHeapByteBuffer(512).bytesStore();
         longerBuffer.writeUtf8(0, "thirty_two_bytes_of_utf8_chars_");
 
-        assertTrue(BytesInternal.equalBytesAny(storeOfThirtyTwoBytes, longerBuffer, 512));
+        assertTrue(BytesInternal.equalBytesAny(storeOfThirtyTwoBytes, longerBuffer, 32));
     }
 
     @Test
     public void testParseDouble() {
+        assumeFalse(GuardedNativeBytes.areNewGuarded());
         @NotNull Object[][] tests = {
                 {"-1E-3 ", -1E-3},
                 {"12E3 ", 12E3},
@@ -308,6 +339,7 @@ public class BytesInternalTest {
 
     @Test
     public void bytesParseDouble_Issue85_SeededRandom() {
+        assumeFalse(GuardedNativeBytes.areNewGuarded());
         Random random = new Random(1);
         int different = 0;
         int max = 10_000;
